@@ -1,2 +1,12 @@
 # learn-koa
 koa 的学习代码
+
+-----------------
+
+## 参考
+koa的学习参考源码→廖雪峰老师的[JavaScript全栈教程](https://github.com/michaelliao/learn-javascript)
+
+-----------------
+
+## 知识点:
+用`koa`处理不同的URL，用`Nunjucks`渲染模板。

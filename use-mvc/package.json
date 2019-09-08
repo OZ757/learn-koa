@@ -1,0 +1,19 @@
+{
+  "name": "use-mvc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "OZ757",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.8.1",
+    "koa-bodyparser": "^4.2.1",
+    "koa-router": "^7.4.0",
+    "mime": "^2.4.4",
+    "mz": "^2.7.0",
+    "nunjucks": "^3.2.0"
+  }
+}

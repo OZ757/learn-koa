@@ -1,0 +1,25 @@
+#sheet {
+	table-layout: fixed;
+	min-width: auto;
+	margin-bottom: 0px;
+}
+
+#sheet tr>th {
+	width: 150px;
+	background-color: #e5e5e5;
+}
+#sheet tr>th:first-child {
+	width: 50px;
+	background-color: #e5e5e5;
+}
+
+#sheet tr>td {
+	width: 150px; !important;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	word-wrap: normal; 
+}
+#sheet tr>td:first-child {
+	width: 50px;
+}
+

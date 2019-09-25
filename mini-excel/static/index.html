@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Vue</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/style.css">
+	<script type="text/javascript" src="/static/js/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript" src="/static/js/vue.min.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script src="/static/js/excel.js"></script>
+	<script>
+		const ID = 'S-001';
+		const COLUMNS = 10;
+
+		function createHeader() {
+			const hdr = [{
+				row: 0,
+				col: 0,
+				text: ''
+			}];
+			for (let i = 1; i <= COLUMNS; i++) {
+				hdr.push({
+					row: 0,
+					col: i,
+					text: String.fromCharCode(64 + i)
+				});
+			}
+			return hdr;
+		}
+
+		function createRow(rIndex) {
+			const row = [{
+				row: rIndex,
+				col: 0,
+				contentEditable: false,
+				text: '' + rIndex,
+				align: 'left'
+			}];
+			for (let i = 1; i <= COLUMNS; i++) {
+				row.push({
+					row: rIndex,
+					col: i,
+					contentEditable: true,
+					text: '',
+					align: 'left'
+				});
+			}
+			return row;
+		}
+
+		function createRows() {
+			const rows = [];
+			for (let i = 1; i <= 10; i++) {
+				rows.push(createRow(i));
+			}
+			return rows;
+		}
+
+		$(function () {
+			const vm = new Vue({
+				el: '#sheet',
+				data: {
+					title: 'New sheet',
+					header: createHeader(),
+					rows: createRows(),
+					selectedRowIndex: 0,
+					selectedColIndex: 0
+				},
+				methods: {
+					open: function () {
+						const that = this;
+						axios.get('/api/sheets/' + ID).then(function (response) {
+							that.title = response.data.title;
+							that.rows = response.data.rows;
+							console.log('loaded ok.')
+						}).catch(function (error) {
+							alert('Falied to load.');
+						});
+					},
+					save: function (todo) {
+						axios.put('/api/sheets/' + ID, {
+							title: this.title,
+							rows: this.rows
+						}).then(function (response) {
+							console.log('saved ok.');
+						}).catch (function (error) {
+							alert('failed to save.');
+						});
+					},
+					focus: function (cell) {
+						this.selectedRowIndex = cell.row;
+						this.selectedColIndex = cell.col;
+					},
+					change: function (e) {
+						const 
+							rowIndex = this.selectedRowIndex,
+							colIndex = this.selectedColIndex;
+						if (rowIndex > 0 && colIndex > 0)	 {
+							const text = e.target.innerText;
+							this.rows[rowIndex - 1][colIndex].text = text;
+						}
+					}
+				}
+			});
+			window.vm = vm;
+
+			const setAlign = function (align) {
+				const 
+					rowIndex = vm.selectedRowIndex,
+					colIndex = vm.selectedColIndex;
+				if (rowIndex > 0 && colIndex > 0) {
+					const row = vm.rows[rowIndex - 1];
+					const cell = row[colIndex];
+					cell.align = align;
+				}	
+			};
+
+			$('#cmd-open').click(() => { vm.open(); });
+			$('#cmd-save').click(() => { vm.save(); });
+			$('#cmd-left').click(() => { setAlign('left'); });
+			$('#cmd-center').click(() => { setAlign('center'); });
+			$('#cmd-right').click(() => { setAlign('right'); });
+			$('#cmd-download').click(() => { 
+				const 
+					fileName = vm.title + '.xls',
+					a = document.createElement('a');
+				a.setAttribute('href', 'data:text/xml,' + encodeURIComponent(makeXls(vm.rows)));
+				a.setAttribute('download', fileName);
+				a.style.display = 'none';
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			});
+			$('#toolbar button').click(function () {
+				$(this).blur();
+			});
+		});
+	</script>
+</head>
+	
+<body style="overflow: hidden;">
+	<header class="navbar navbar-static-top">
+		<div class="container">
+			<div class="navbar-header">
+				<a href="/" class="navbar-brand">Sheet</a>
+			</div>
+			<nav class="collapse navbar-collapse" id="toolbar">
+				<div class="btn-group">
+					<button id="cmd-open" type="button" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-folder-open"> Open</i></button>
+					<button id="cmd-save" type="button" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-floppy-disk"> Save</i></button>
+					<button id="cmd-download" type="button" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-save"> Download</i></button>
+				</div>
+				<div class="btn-group">
+					<button id="cmd-left" type="button" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-align-left"></i></button>
+					<button id="cmd-center" type="button" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-align-center"></i></button>
+					<button id="cmd-right" type="button" class="btn btn-default navbar-btn"><i class="glyphicon glyphicon-align-right"></i></button>
+				</div>
+			</nav>
+		</div>
+	</header>
+
+	<div id="important" style="position: absolute; margin: 50px 0 35px 0; left: 0; right: 0; top: 0; bottom: 0; overflow: scroll;">
+		<table id="sheet" class="table table-bordered">
+			<thead>
+				<tr>
+					<th v-for="cell in header" @focus="focus(cell)" v-text="cell.text"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-for="tr in rows">
+					<td v-for="cell in tr" @focus="focus(cell)" @blur="change" :contenteditable="cell.contentEditable" :style="{ textAlign: cell.align }" v-text="cell.text"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<footer class="navbar navbar-fixed-bottom" style="background-color: #e7e7e7; height: 35px; min-height: 35px; overflow: hidden;">
+			<div class="container">
+			<p>
+				<a href="javascript:;" target="_blank">Website</a>
+                <a href="https://github.com/OZ757/learn-koa/" target="_blank">GitHub</a>
+                This JavaScript course is created by <a target="_blank" href="https://github.com/OZ757/">OZ757</a>.
+			</p>
+		</div>
+	</footer>
+</body>
+</html>
